@@ -24,7 +24,10 @@ const levelupSound = new Audio("assets/sounds/levelup.mp3");
 const backgroundSound = new Audio("assets/sounds/background.mp3");
 backgroundSound.loop = true;
 
-if (soundEnabled) backgroundSound.play();
+// Start background music on first interaction
+document.body.addEventListener("click", () => {
+  if (soundEnabled) backgroundSound.play();
+}, { once: true });
 
 soundToggle.onclick = () => {
   soundEnabled = !soundEnabled;
