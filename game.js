@@ -10,6 +10,7 @@ let level = 1;
 let snowSpeed = 1;
 let spawnInterval = 2000;
 let gameOver = false;
+let gameStarted = false;
 let lastSpawn = Date.now();
 
 const scoreDisplay = document.getElementById("score");
@@ -24,31 +25,44 @@ const levelupSound = new Audio("assets/sounds/levelup.mp3");
 const backgroundSound = new Audio("assets/sounds/background.mp3");
 backgroundSound.loop = true;
 
-// Start background music on first interaction
-document.body.addEventListener("click", () => {
-  if (soundEnabled) backgroundSound.play();
-}, { once: true });
-
 soundToggle.onclick = () => {
   soundEnabled = !soundEnabled;
   soundToggle.textContent = soundEnabled ? "🔊" : "🔇";
-  if (soundEnabled) backgroundSound.play(); else backgroundSound.pause();
+  if (soundEnabled && gameStarted) backgroundSound.play();
+  else backgroundSound.pause();
 };
 
-function drawSnowflake(x, y, size) {
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let i = 0; i < 6; i++) {
-    let angle = (Math.PI / 3) * i;
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + size * Math.cos(angle), y + size * Math.sin(angle));
+// Start game on first click
+document.body.addEventListener("click", () => {
+  if (!gameStarted) {
+    gameStarted = true;
+    if (soundEnabled) backgroundSound.play();
+    requestAnimationFrame(gameLoop);
   }
-  ctx.stroke();
+}, { once: true });
+
+function drawSnowflake(x, y, size) {
+  // Modern style snowflake with shadow (3D effect)
+  const gradient = ctx.createRadialGradient(x, y, size * 0.1, x, y, size * 0.5);
+  gradient.addColorStop(0, "white");
+  gradient.addColorStop(1, "#cceeff");
+
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.moveTo(x + size * 0.5, y);
+  for (let i = 1; i < 6; i++) {
+    const angle = i * (Math.PI * 2) / 6;
+    ctx.lineTo(x + Math.cos(angle) * size * 0.5, y + Math.sin(angle) * size * 0.5);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.shadowColor = "#b0cde0";
+  ctx.shadowBlur = 8;
 }
 
 function spawnSnowflake() {
-  const size = Math.random() * 5 + 5;
+  const size = Math.random() * 25 + 15; // Increased range: 15–40
   snowflakes.push({
     x: Math.random() * canvas.width,
     y: -size,
@@ -78,8 +92,17 @@ function updateSnowflakes(mouseX, mouseY) {
   }
 }
 
+function drawGradientBackground() {
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "#1e3c72"); // top
+  gradient.addColorStop(1, "#2a5298"); // bottom
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
 function drawSnowflakes() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGradientBackground();
+
   for (const flake of snowflakes) {
     drawSnowflake(flake.x, flake.y, flake.size);
   }
@@ -98,6 +121,14 @@ function drawSnowflakes() {
   }
 }
 
+function showStartPopup() {
+  ctx.fillStyle = "rgba(100, 100, 100, 0.6)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "white";
+  ctx.font = "36px monospace";
+  ctx.fillText("Нажми, чтобы начать", canvas.width / 2 - 160, canvas.height / 2);
+}
+
 let mouseX = 0;
 let mouseY = 0;
 canvas.addEventListener("mousemove", e => {
@@ -106,6 +137,11 @@ canvas.addEventListener("mousemove", e => {
 });
 
 function gameLoop() {
+  if (!gameStarted) {
+    showStartPopup();
+    return;
+  }
+
   if (gameOver) return;
   const now = Date.now();
   if (now - lastSpawn > spawnInterval) {
@@ -131,4 +167,5 @@ setInterval(() => {
   if (!gameOver) levelUp();
 }, 30000);
 
-gameLoop();
+drawGradientBackground();
+showStartPopup();
