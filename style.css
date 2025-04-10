@@ -1,7 +1,6 @@
 body {
   margin: 0;
   overflow: hidden;
-  background: #2c3e50;
   font-family: monospace;
   color: white;
 }
@@ -10,7 +9,6 @@ body {
   display: block;
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(#3b4b61, #1c1f2b);
 }
 
 #ui {
